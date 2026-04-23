@@ -108,8 +108,8 @@ itemSpawner.loop(1000, () => {
     console.log("isMovingByCursor", isMovingByCursor);
 
     if (isMovingByCursor) {
-      console.log("moving by cursor");
-      item.pos = mousePosition;
+      item.pos.x = mousePosition.x;
+      item.pos.y = mousePosition.y;
     }
   });
 
