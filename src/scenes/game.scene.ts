@@ -54,7 +54,8 @@ const assemblyStation = [
 for (const pos of assemblyStation) {
   const assemblyItems: Partial<Record<ItemName, number>> = {
     [ITEM.brown]: 2,
-    [ITEM.green]: 1
+    [ITEM.green]: 1,
+    [ITEM.orange]: 3
   };
 
   const assemblyStationEntity = k.add([
@@ -63,6 +64,23 @@ for (const pos of assemblyStation) {
     k.area(),
     "assemblyStation"
   ]);
+
+  const widthOfItem = 8;
+  const distanceBetweenItems = 2;
+  const step = widthOfItem + distanceBetweenItems;
+  const numberOfKeys = Object.keys(assemblyItems).length;
+  const totalWidth =
+    numberOfKeys * widthOfItem + (numberOfKeys - 1) * distanceBetweenItems;
+  const startX = GAME_OPTIONS.TILE_SIZE / 2 - totalWidth / 2;
+
+  Object.entries(assemblyItems).forEach(([name, count], i) => {
+    const xOffset = startX + i * step;
+    assemblyStationEntity.add([k.sprite(name), k.pos(xOffset, -15)]);
+    assemblyStationEntity.add([
+      k.text(String(count), { size: 6 }),
+      k.pos(xOffset + 2, -5)
+    ]);
+  });
 
   assemblyStationEntity.on("inAssemblyStation", (item) => {
     console.log("item in assembly station", item);
