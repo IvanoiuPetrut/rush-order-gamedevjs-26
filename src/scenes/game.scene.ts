@@ -24,7 +24,7 @@ k.onMouseMove((pos) => {
 });
 
 k.onMouseRelease(() => {
-  k.trigger("mouseRelease", "item");
+  k.trigger("mouseRelease", "movable");
 });
 
 k.loadShader(
@@ -45,6 +45,91 @@ for (const [item, { sprite }] of Object.entries(ITEMS)) {
 
 function getMapPositionByTile(row: number, col: number) {
   return k.vec2(col * GAME_OPTIONS.TILE_SIZE, row * GAME_OPTIONS.TILE_SIZE);
+}
+
+function addMovableItem(
+  spriteKey: ItemName,
+  startPos: { x: number; y: number },
+  tags: string[],
+  targetTag: string,
+  onDropped: (item: GameObjWithComponents, target: GameObj) => void,
+  onBelt = false
+) {
+  let isMovingByCursor = false;
+  let isOnBelt = onBelt;
+  let isLocked = false;
+  const outlineOffset = 0.4;
+
+  const outlineItem = k.add([
+    k.sprite(spriteKey),
+    k.pos(startPos.x - outlineOffset, startPos.y - outlineOffset),
+    k.color(255, 255, 255),
+    k.shader("silhouette"),
+    k.z(50),
+    k.scale(0),
+    "outlineItem"
+  ]);
+
+  const item = k.add([
+    k.sprite(spriteKey),
+    k.pos(startPos.x, startPos.y),
+    ...tags,
+    "movable",
+    k.timer(),
+    k.z(100),
+    k.area({ scale: 1.5, offset: k.vec2(-2, -2) })
+  ] as any) as GameObjWithComponents;
+
+  item.onUpdate(() => {
+    outlineItem.pos.x = item.pos.x - outlineOffset;
+    outlineItem.pos.y = item.pos.y - outlineOffset;
+
+    if (isOnBelt) item.move(50, 0);
+
+    if (isMovingByCursor) {
+      item.pos.x = mousePosition.x;
+      item.pos.y = mousePosition.y;
+    }
+
+    const isOnGround = !isOnBelt && !isMovingByCursor && !isLocked;
+    if (isOnGround) outlineItem.scaleTo(1.2);
+  });
+
+  item.onClick(() => {
+    if (isLocked) return;
+    cursor = "grabbing";
+    isOnBelt = false;
+    isMovingByCursor = true;
+  });
+
+  item.on("mouseRelease", () => {
+    if (isLocked) return;
+    isMovingByCursor = false;
+    item.getCollisions().forEach((collision) => {
+      if (collision.target.is(targetTag)) {
+        onDropped(item, collision.target);
+        cursor = "default";
+      }
+    });
+  });
+
+  item.onHover(() => {
+    if (!isLocked) cursor = "grab";
+  });
+  item.onHoverEnd(() => {
+    if (!isLocked) cursor = "default";
+  });
+
+  const lock = () => {
+    isLocked = true;
+    outlineItem.scaleTo(0);
+  };
+  const destroyItem = () => {
+    item.destroy();
+    outlineItem.destroy();
+  };
+
+  return { item, lock, destroyItem };
 }
 
 // ! Belt
@@ -114,14 +199,11 @@ for (const pos of assemblyStation) {
   assemblyStationEntity.on(
     "inAssemblyStation",
     (item: GameObjWithComponents) => {
-      //check that the item is one of the required and not 0
       console.log("item in assembly station", item);
       const tagToRemove =
         (Object.keys(assemblyItems) as ItemName[]).find((name) =>
           item.is(name)
         ) ?? null;
-
-      console.log("tag to remove", tagToRemove, assemblyItems);
 
       if (!tagToRemove) {
         return;
@@ -169,31 +251,60 @@ for (const pos of assemblyStation) {
     itemInAssembly.forEach((item) => item.destroy());
     itemInAssembly.length = 0;
 
-    k.add([
-      k.sprite(ITEM.complete_item),
-      k.pos(pos.x, pos.y + 24),
-      "completeItem"
-    ]);
+    const completePos = k.vec2(pos.x, pos.y + 24);
+    const { lock, destroyItem } = addMovableItem(
+      ITEM.complete_item,
+      completePos,
+      ["completeItem"],
+      "packager",
+      (_item, target) => {
+        lock();
+        target.trigger("startPackaging", destroyItem);
+      }
+    );
   });
 }
 
 // ! Packager
 const packagerPosition = getMapPositionByTile(6, 8);
-k.add([
+const packagerEntity = k.add([
   k.sprite(ITEM.packager),
   k.pos(packagerPosition.x, packagerPosition.y),
   k.area(),
+  k.timer(),
   "packager"
 ]);
 
+packagerEntity.on("startPackaging", (destroyCompleteItem: () => void) => {
+  packagerEntity.wait(2, () => {
+    destroyCompleteItem();
+
+    const packagePos = k.vec2(packagerPosition.x, packagerPosition.y + 16);
+    const { lock, destroyItem } = addMovableItem(
+      ITEM.package_item,
+      packagePos,
+      ["packageItem"],
+      "car",
+      (_item, target) => {
+        lock();
+        target.trigger("receivePackage", destroyItem);
+      }
+    );
+  });
+});
+
 // ! Car
 const carPosition = getMapPositionByTile(10, 15);
-k.add([
+const carEntity = k.add([
   k.sprite(ITEM.car),
   k.pos(carPosition.x, carPosition.y),
   k.area(),
   "car"
 ]);
+
+carEntity.on("receivePackage", (destroyPackage: () => void) => {
+  destroyPackage();
+});
 
 // ! Item Spawner
 
@@ -205,105 +316,23 @@ const itemSpawner = k.add([
   k.timer()
 ]);
 
+const itemsToSpawn: ItemName[] = [ITEM.brown, ITEM.green, ITEM.orange];
+
 itemSpawner.loop(0.5, () => {
-  const itemsToSpawn: ItemName[] = [ITEM.brown, ITEM.green, ITEM.orange];
   const randomItem = itemsToSpawn[Math.floor(k.rand(itemsToSpawn.length))];
-  let isOnBelt = true;
-  let isMovingByCursor = false;
-  let isInAssemblyStation = false;
+  const startPos = getMapPositionByTile(beltRow, 0);
 
-  const outlinePos = getMapPositionByTile(beltRow, 0);
-  const outlineOffset = 0.4;
-
-  const outlineItem = k.add([
-    k.sprite(randomItem),
-    k.pos(outlinePos.x - outlineOffset, outlinePos.y - outlineOffset),
-    k.color(255, 255, 255),
-    k.shader("silhouette"),
-    k.z(50),
-    k.scale(0),
-    "outlineItem"
-  ]);
-
-  const item = k.add([
-    k.sprite(randomItem),
-    k.pos(getMapPositionByTile(beltRow, 0)),
-    "item",
+  const { item, lock, destroyItem } = addMovableItem(
     randomItem,
-    k.timer(),
-    k.z(100),
-    k.area({ scale: 1.5, offset: k.vec2(-2, -2) })
-  ]);
+    startPos,
+    ["item", randomItem],
+    "assemblyStation",
+    (_item, target) => target.trigger("inAssemblyStation", _item),
+    true
+  );
 
-  item.onUpdate(() => {
-    outlineItem.pos.x = item.pos.x - outlineOffset;
-    outlineItem.pos.y = item.pos.y - outlineOffset;
-
-    if (isOnBelt) {
-      item.move(50, 0);
-    }
-
-    if (isMovingByCursor) {
-      item.pos.x = mousePosition.x;
-      item.pos.y = mousePosition.y;
-    }
-
-    if (!isOnBelt && !isMovingByCursor && !isInAssemblyStation) {
-      outlineItem.scaleTo(1.2);
-    }
-  });
-
-  item.onCollide("fire", () => {
-    item.destroy();
-    outlineItem.destroy();
-  });
-
-  item.onClick(() => {
-    if (isInAssemblyStation) {
-      return;
-    }
-
-    cursor = "grabbing";
-    isOnBelt = false;
-    isMovingByCursor = true;
-  });
-
-  item.on("inAssemblyStation", () => {
-    isInAssemblyStation = true;
-    outlineItem.scaleTo(0);
-  });
-
-  item.on("mouseRelease", () => {
-    if (isInAssemblyStation) {
-      return;
-    }
-
-    isMovingByCursor = false;
-
-    const collisions = item.getCollisions();
-    collisions.forEach((collision) => {
-      if (collision.target.is("assemblyStation")) {
-        collision.target.trigger("inAssemblyStation", item);
-        cursor = "default";
-      }
-    });
-  });
-
-  item.onHover(() => {
-    if (isInAssemblyStation) {
-      return;
-    }
-
-    cursor = "grab";
-  });
-
-  item.onHoverEnd(() => {
-    if (isInAssemblyStation) {
-      return;
-    }
-
-    cursor = "default";
-  });
+  item.onCollide("fire", () => destroyItem());
+  item.on("inAssemblyStation", () => lock());
 });
 
 k.onUpdate(() => {
