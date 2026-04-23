@@ -3,6 +3,8 @@ import { ITEM, ITEMS } from "../entities";
 import { GAME_OPTIONS } from "../constants";
 //loadSprite(\"bean\", \"sprites/bean.png\")
 
+let cursor: "default" | "grab" | "grabbing" | "pointer" = "default";
+
 //for item in ITEMS, load the sprite
 for (const [item, { sprite }] of Object.entries(ITEMS)) {
   k.loadSprite(item, sprite);
@@ -77,4 +79,20 @@ itemSpawner.loop(2, () => {
   item.onCollide("fire", () => {
     item.destroy();
   });
+
+  item.onClick(() => {
+    cursor = "grabbing";
+  });
+
+  item.onHover(() => {
+    cursor = "grab";
+  });
+
+  item.onHoverEnd(() => {
+    cursor = "default";
+  });
+});
+
+k.onUpdate(() => {
+  k.setCursor(cursor);
 });
