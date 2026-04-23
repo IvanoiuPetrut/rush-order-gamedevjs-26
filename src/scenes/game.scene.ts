@@ -81,11 +81,13 @@ for (const pos of assemblyStation) {
     [ITEM.orange]: 1
   };
   const itemInAssembly = [] as GameObjWithComponents[];
+  let assemblyTime = 3;
 
   const assemblyStationEntity = k.add([
     k.sprite(ITEM.assembly_station),
     k.pos(pos.x, pos.y),
     k.area(),
+    k.timer(),
     "assemblyStation"
   ]);
 
@@ -137,18 +139,24 @@ for (const pos of assemblyStation) {
       item.trigger("inAssemblyStation");
       itemInAssembly.push(item);
 
-      //if all entries in assemblyItems are 0, we trigger "assemblyComplete" event and reset the assembly station
       const isComplete = Object.values(assemblyItems).every(
         (count) => count === 0
       );
       if (isComplete) {
-        assemblyStationEntity.trigger("assemblyComplete");
+        assemblyStationEntity.trigger("assemblyStart");
       }
     }
   );
 
+  assemblyStationEntity.on("assemblyStart", () => {
+    console.log("assembly start!");
+    assemblyStationEntity.wait(assemblyTime, () => {
+      console.log("assembly complete!");
+      assemblyStationEntity.trigger("assemblyComplete");
+    });
+  });
+
   assemblyStationEntity.on("assemblyComplete", () => {
-    console.log("assembly complete!");
     assemblyItems = {
       [ITEM.brown]: 1,
       [ITEM.green]: 1,
@@ -160,6 +168,12 @@ for (const pos of assemblyStation) {
     });
     itemInAssembly.forEach((item) => item.destroy());
     itemInAssembly.length = 0;
+
+    k.add([
+      k.sprite(ITEM.complete_item),
+      k.pos(pos.x, pos.y + 24),
+      "completeItem"
+    ]);
   });
 }
 
