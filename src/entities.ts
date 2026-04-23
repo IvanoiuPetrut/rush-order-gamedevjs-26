@@ -1,13 +1,16 @@
-const ITEM_NAMES = {
+export const ITEM = {
   assembly_station: "ASSEMBLY_STATION",
   belt: "BELT",
   car: "CAR",
   fire: "FIRE",
   packager: "PACKAGER",
-  waiter: "WAITER"
+  waiter: "WAITER",
+  brown: "BROWN",
+  green: "GREEN",
+  orange: "ORANGE"
 } as const;
 
-export type ItemName = (typeof ITEM_NAMES)[keyof typeof ITEM_NAMES];
+export type ItemName = (typeof ITEM)[keyof typeof ITEM];
 
 export interface Item {
   sprite: string;
@@ -31,5 +34,14 @@ export const ITEMS: Record<ItemName, Item> = {
   },
   WAITER: {
     sprite: "sprites/waiter.png"
+  },
+  BROWN: {
+    sprite: "sprites/items/brown.png"
+  },
+  GREEN: {
+    sprite: "sprites/items/green.png"
+  },
+  ORANGE: {
+    sprite: "sprites/items/orange.png"
   }
 };
