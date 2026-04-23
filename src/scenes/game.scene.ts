@@ -209,6 +209,7 @@ export function setup() {
       k.pos(pos.x, pos.y),
       k.area(),
       k.timer(),
+      k.animate(),
       "assemblyStation"
     ]);
 
@@ -279,6 +280,10 @@ export function setup() {
 
     assemblyStationEntity.on("assemblyStart", () => {
       console.log("assembly start!");
+      (assemblyStationEntity as any).animate("pos", [
+        k.vec2(pos.x - 0.5, pos.y),
+        k.vec2(pos.x + 0.5, pos.y)
+      ], { duration: 0.08, direction: "ping-pong" });
       assemblyStationEntity.wait(assemblyTime, () => {
         console.log("assembly complete!");
         assemblyStationEntity.trigger("assemblyComplete");
@@ -286,6 +291,8 @@ export function setup() {
     });
 
     assemblyStationEntity.on("assemblyComplete", () => {
+      (assemblyStationEntity as any).unanimate("pos");
+      assemblyStationEntity.pos = k.vec2(pos.x, pos.y);
       assemblyItems = {
         [ITEM.brown]: 1,
         [ITEM.green]: 1,
@@ -319,11 +326,18 @@ export function setup() {
     k.pos(packagerPosition.x, packagerPosition.y),
     k.area(),
     k.timer(),
+    k.animate(),
     "packager"
   ]);
 
   packagerEntity.on("startPackaging", (destroyCompleteItem: () => void) => {
+    (packagerEntity as any).animate("pos", [
+      k.vec2(packagerPosition.x - 0.5, packagerPosition.y),
+      k.vec2(packagerPosition.x + 0.5, packagerPosition.y)
+    ], { duration: 0.08, direction: "ping-pong" });
     packagerEntity.wait(2, () => {
+      (packagerEntity as any).unanimate("pos");
+      packagerEntity.pos = k.vec2(packagerPosition.x, packagerPosition.y);
       destroyCompleteItem();
 
       const packagePos = k.vec2(packagerPosition.x, packagerPosition.y + 16);
