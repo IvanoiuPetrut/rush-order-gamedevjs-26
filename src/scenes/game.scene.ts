@@ -17,6 +17,28 @@ interface GameObjWithComponents extends GameObj<
 
 let cursor: keyof typeof CURSORS = "default";
 const mousePosition = k.vec2(0, 0);
+let score = 48;
+
+function addScore(points: number) {
+  score = Math.min(score + points, SCORE_MAX_VALUE);
+  scoreBarFill.width = score;
+}
+
+const scoreBarOuter = k.add([
+  k.rect(60, 10),
+  k.pos(8, 4),
+  k.color(40, 40, 40),
+  k.fixed(),
+  k.z(200)
+]);
+
+const SCORE_MAX_VALUE = 56;
+
+const scoreBarFill = scoreBarOuter.add([
+  k.rect(score, 6),
+  k.pos(2, 2),
+  k.color(80, 200, 80)
+]);
 
 k.onMouseMove((pos) => {
   mousePosition.x = pos.x;
@@ -58,6 +80,7 @@ function addMovableItem(
   let isMovingByCursor = false;
   let isOnBelt = onBelt;
   let isLocked = false;
+  let triggeredIsOnGround = false;
   const outlineOffset = 0.4;
 
   const outlineItem = k.add([
@@ -92,7 +115,11 @@ function addMovableItem(
     }
 
     const isOnGround = !isOnBelt && !isMovingByCursor && !isLocked;
-    if (isOnGround) outlineItem.scaleTo(1.2);
+    if (isOnGround && !triggeredIsOnGround) {
+      outlineItem.scaleTo(1.2);
+      addScore(-1);
+      triggeredIsOnGround = true;
+    }
   });
 
   item.onClick(() => {
@@ -303,6 +330,7 @@ const carEntity = k.add([
 ]);
 
 carEntity.on("receivePackage", (destroyPackage: () => void) => {
+  addScore(4);
   destroyPackage();
 });
 
@@ -331,7 +359,9 @@ itemSpawner.loop(0.5, () => {
     true
   );
 
-  item.onCollide("fire", () => destroyItem());
+  item.onCollide("fire", () => {
+    (destroyItem(), addScore(-1));
+  });
   item.on("inAssemblyStation", () => lock());
 });
 
