@@ -52,6 +52,10 @@ const assemblyStation = [
 ];
 
 for (const pos of assemblyStation) {
+  const assemblyItems = {
+    ITEM.brown: 5,
+  }
+
   k.add([
     k.sprite(ITEM.assembly_station),
     k.pos(pos.x, pos.y),
@@ -88,7 +92,7 @@ const itemSpawner = k.add([
   k.timer()
 ]);
 
-itemSpawner.loop(1000, () => {
+itemSpawner.loop(100, () => {
   let isOnBelt = true;
   let isMovingByCursor = false;
 
@@ -97,15 +101,13 @@ itemSpawner.loop(1000, () => {
     k.pos(getMapPositionByTile(beltRow, 0)),
     "item",
     k.timer(),
-    k.area()
+    k.area({ scale: 1.5, offset: k.vec2(-2, -2) })
   ]);
 
   item.onUpdate(() => {
     if (isOnBelt) {
       item.move(50, 0);
     }
-
-    console.log("isMovingByCursor", isMovingByCursor);
 
     if (isMovingByCursor) {
       item.pos.x = mousePosition.x;
@@ -117,6 +119,13 @@ itemSpawner.loop(1000, () => {
     item.destroy();
   });
 
+  item.onCollide("assemblyStation", () => {
+    // console.log(isOnBelt, isMovingByCursor);
+    // if (!isOnBelt && !isMovingByCursor) {
+    //   item.destroy();
+    // }
+  });
+
   item.onClick(() => {
     cursor = "grabbing";
     isOnBelt = false;
@@ -126,6 +135,13 @@ itemSpawner.loop(1000, () => {
   item.on("mouseRelease", () => {
     console.log("mouse released on item");
     isMovingByCursor = false;
+    const collisions = item.getCollisions();
+    collisions.forEach((collision) => {
+      if (collision.target.is("assemblyStation")) {
+        item.destroy();
+        cursor = "default";
+      }
+    });
   });
 
   item.onHover(() => {
