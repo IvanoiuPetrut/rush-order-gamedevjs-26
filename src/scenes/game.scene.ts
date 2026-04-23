@@ -36,14 +36,17 @@ export function setup() {
   const mousePosition = k.vec2(0, 0);
   let score = 48;
   let playTime = 0;
-  const SCORE_MAX_VALUE = 5;
+  const SCORE_MAX_VALUE = 56;
+  let maxValueForItemsNeededToAssemble = 2;
+  let beltSpeed = 20;
+  let itemSpawnInterval = 1.5;
 
   function addScore(points: number) {
     score = Math.max(0, Math.min(score + points, SCORE_MAX_VALUE));
     scoreBarFill.width = score;
     if (score === 0) {
       k.setData("playTime", playTime);
-      k.go("game-over");
+      // k.go("game-over");
     }
   }
 
@@ -89,7 +92,7 @@ export function setup() {
       outlineItem.pos.x = item.pos.x - outlineOffset;
       outlineItem.pos.y = item.pos.y - outlineOffset;
 
-      if (isOnBelt) item.move(50, 0);
+      if (isOnBelt) item.move(beltSpeed, 0);
 
       if (isMovingByCursor) {
         item.pos.x = mousePosition.x;
@@ -157,7 +160,7 @@ export function setup() {
   ]);
 
   // ! Belt
-  const beltLength = 8;
+  const beltLength = 12;
   const beltRow = 12;
   const beltPositions = Array.from({ length: beltLength }, (_, col) =>
     getMapPositionByTile(beltRow, col)
@@ -177,17 +180,17 @@ export function setup() {
 
   // ! Assembly station
   const assemblyStation = [
-    getMapPositionByTile(2, 5),
-    getMapPositionByTile(2, 7),
-    getMapPositionByTile(2, 9),
-    getMapPositionByTile(2, 11)
+    getMapPositionByTile(3, 5),
+    getMapPositionByTile(3, 8),
+    getMapPositionByTile(3, 11),
+    getMapPositionByTile(3, 14)
   ];
 
   for (const pos of assemblyStation) {
     let assemblyItems: Partial<Record<ItemName, number>> = {
-      [ITEM.brown]: 1,
-      [ITEM.green]: 1,
-      [ITEM.orange]: 1
+      [ITEM.brown]: Math.floor(k.rand(maxValueForItemsNeededToAssemble)) + 1,
+      [ITEM.green]: Math.floor(k.rand(maxValueForItemsNeededToAssemble)) + 1,
+      [ITEM.orange]: Math.floor(k.rand(maxValueForItemsNeededToAssemble)) + 1
     };
     const itemInAssembly = [] as GameObjWithComponents[];
     let assemblyTime = 3;
@@ -333,7 +336,7 @@ export function setup() {
 
   // ! Item Spawner
   const itemSpawner = k.add([
-    k.pos(getMapPositionByTile(beltRow, 0)),
+    k.pos(getMapPositionByTile(beltRow, -1)),
     k.rect(GAME_OPTIONS.TILE_SIZE, GAME_OPTIONS.TILE_SIZE),
     k.color(k.Color.RED),
     "itemSpawner",
@@ -342,9 +345,11 @@ export function setup() {
 
   const itemsToSpawn: ItemName[] = [ITEM.brown, ITEM.green, ITEM.orange];
 
-  itemSpawner.loop(0.5, () => {
+  itemSpawner.loop(itemSpawnInterval, () => {
     const randomItem = itemsToSpawn[Math.floor(k.rand(itemsToSpawn.length))];
     const startPos = getMapPositionByTile(beltRow, 0);
+    startPos.x = startPos.x - k.rand(16);
+    startPos.y = startPos.y + k.rand(8);
 
     const { item, lock, destroyItem } = addMovableItem(
       randomItem,
