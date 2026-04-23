@@ -169,8 +169,8 @@ export function setup() {
   ]);
 
   // ! Belt
-  const beltLength = 12;
-  const beltRow = 12;
+  const beltLength = 14;
+  const beltRow = 14;
   const beltPositions = Array.from({ length: beltLength }, (_, col) =>
     getMapPositionByTile(beltRow, col)
   );
@@ -188,11 +188,12 @@ export function setup() {
   ]);
 
   // ! Assembly station
+  const ASSEMBLY_STATION_ROW = 2;
   const assemblyStation = [
-    getMapPositionByTile(3, 5),
-    getMapPositionByTile(3, 8),
-    getMapPositionByTile(3, 11),
-    getMapPositionByTile(3, 14)
+    getMapPositionByTile(ASSEMBLY_STATION_ROW, 7),
+    getMapPositionByTile(ASSEMBLY_STATION_ROW, 10),
+    getMapPositionByTile(ASSEMBLY_STATION_ROW, 13),
+    getMapPositionByTile(ASSEMBLY_STATION_ROW, 16)
   ];
 
   for (const pos of assemblyStation) {
@@ -201,6 +202,7 @@ export function setup() {
       [ITEM.green]: Math.floor(k.rand(maxValueForItemsNeededToAssemble)) + 1,
       [ITEM.orange]: Math.floor(k.rand(maxValueForItemsNeededToAssemble)) + 1
     };
+
     const itemInAssembly = [] as GameObjWithComponents[];
     let assemblyTime = 3;
 
@@ -280,10 +282,11 @@ export function setup() {
 
     assemblyStationEntity.on("assemblyStart", () => {
       console.log("assembly start!");
-      (assemblyStationEntity as any).animate("pos", [
-        k.vec2(pos.x - 0.5, pos.y),
-        k.vec2(pos.x + 0.5, pos.y)
-      ], { duration: 0.08, direction: "ping-pong" });
+      (assemblyStationEntity as any).animate(
+        "pos",
+        [k.vec2(pos.x - 0.5, pos.y), k.vec2(pos.x + 0.5, pos.y)],
+        { duration: 0.08, direction: "ping-pong" }
+      );
       assemblyStationEntity.wait(assemblyTime, () => {
         console.log("assembly complete!");
         assemblyStationEntity.trigger("assemblyComplete");
@@ -320,53 +323,76 @@ export function setup() {
   }
 
   // ! Packager
-  const packagerPosition = getMapPositionByTile(6, 8);
-  const packagerEntity = k.add([
-    k.sprite(ITEM.packager),
-    k.pos(packagerPosition.x, packagerPosition.y),
-    k.area(),
-    k.timer(),
-    k.animate(),
-    "packager"
-  ]);
+  const PACKAGER_ROW = 5;
+  const packagerPositions = [
+    getMapPositionByTile(PACKAGER_ROW, 2),
+    getMapPositionByTile(PACKAGER_ROW, 5),
+    getMapPositionByTile(PACKAGER_ROW, 8),
+    getMapPositionByTile(PACKAGER_ROW, 11)
+  ];
 
-  packagerEntity.on("startPackaging", (destroyCompleteItem: () => void) => {
-    (packagerEntity as any).animate("pos", [
-      k.vec2(packagerPosition.x - 0.5, packagerPosition.y),
-      k.vec2(packagerPosition.x + 0.5, packagerPosition.y)
-    ], { duration: 0.08, direction: "ping-pong" });
-    packagerEntity.wait(2, () => {
-      (packagerEntity as any).unanimate("pos");
-      packagerEntity.pos = k.vec2(packagerPosition.x, packagerPosition.y);
-      destroyCompleteItem();
+  for (const packagerPosition of packagerPositions) {
+    const packagerEntity = k.add([
+      k.sprite(ITEM.packager),
+      k.pos(packagerPosition.x, packagerPosition.y),
+      k.area(),
+      k.timer(),
+      k.animate(),
+      "packager"
+    ]);
 
-      const packagePos = k.vec2(packagerPosition.x, packagerPosition.y + 16);
-      const { lock, destroyItem } = addMovableItem(
-        ITEM.package_item,
-        packagePos,
-        ["packageItem"],
-        "car",
-        (_item, target) => {
-          lock();
-          target.trigger("receivePackage", destroyItem);
-        }
+    packagerEntity.on("startPackaging", (destroyCompleteItem: () => void) => {
+      (packagerEntity as any).animate(
+        "pos",
+        [
+          k.vec2(packagerPosition.x - 0.5, packagerPosition.y),
+          k.vec2(packagerPosition.x + 0.5, packagerPosition.y)
+        ],
+        { duration: 0.08, direction: "ping-pong" }
       );
+      packagerEntity.wait(2, () => {
+        (packagerEntity as any).unanimate("pos");
+        packagerEntity.pos = k.vec2(packagerPosition.x, packagerPosition.y);
+        destroyCompleteItem();
+
+        const packagePos = k.vec2(packagerPosition.x, packagerPosition.y + 16);
+        const { lock, destroyItem } = addMovableItem(
+          ITEM.package_item,
+          packagePos,
+          ["packageItem"],
+          "car",
+          (_item, target) => {
+            lock();
+            target.trigger("receivePackage", destroyItem);
+          }
+        );
+      });
     });
-  });
+  }
 
   // ! Car
-  const carPosition = getMapPositionByTile(10, 15);
-  const carEntity = k.add([
-    k.sprite(ITEM.car),
-    k.pos(carPosition.x, carPosition.y),
-    k.area(),
-    "car"
-  ]);
 
-  carEntity.on("receivePackage", (destroyPackage: () => void) => {
-    addScore(4);
-    destroyPackage();
-  });
+  const CAR_COLUMN = 19;
+  const carsPositions = [
+    getMapPositionByTile(6, CAR_COLUMN),
+    getMapPositionByTile(8, CAR_COLUMN),
+    getMapPositionByTile(10, CAR_COLUMN),
+    getMapPositionByTile(12, CAR_COLUMN)
+  ];
+
+  for (const carPosition of carsPositions) {
+    const carEntity = k.add([
+      k.sprite(ITEM.car),
+      k.pos(carPosition.x, carPosition.y),
+      k.area(),
+      "car"
+    ]);
+
+    carEntity.on("receivePackage", (destroyPackage: () => void) => {
+      addScore(4);
+      destroyPackage();
+    });
+  }
 
   // ! Item Spawner
   const itemSpawner = k.add([
