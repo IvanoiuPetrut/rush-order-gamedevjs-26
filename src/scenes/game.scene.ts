@@ -151,16 +151,18 @@ const itemSpawner = k.add([
   k.timer()
 ]);
 
-itemSpawner.loop(1.5, () => {
+itemSpawner.loop(0.5, () => {
+  const itemsToSpawn: ItemName[] = [ITEM.brown, ITEM.green, ITEM.orange];
+  const randomItem = itemsToSpawn[Math.floor(k.rand(itemsToSpawn.length))];
   let isOnBelt = true;
   let isMovingByCursor = false;
   let isInAssemblyStation = false;
 
   const item = k.add([
-    k.sprite(ITEM.brown),
+    k.sprite(randomItem),
     k.pos(getMapPositionByTile(beltRow, 0)),
     "item",
-    ITEM.brown,
+    randomItem,
     k.timer(),
     k.area({ scale: 1.5, offset: k.vec2(-2, -2) })
   ]);
