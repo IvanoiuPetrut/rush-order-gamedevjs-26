@@ -84,6 +84,7 @@ export function setup() {
       ...tags,
       "movable",
       k.timer(),
+      k.animate(),
       k.z(100),
       k.area({ scale: 1.5, offset: k.vec2(-2, -2) })
     ] as any) as GameObjWithComponents;
@@ -104,6 +105,13 @@ export function setup() {
         outlineItem.scaleTo(1.2);
         addScore(-1);
         triggeredIsOnGround = true;
+        const landX = item.pos.x;
+        const landY = item.pos.y;
+        (item as any).animate(
+          "pos",
+          [k.vec2(landX, landY), k.vec2(landX, landY - 2)],
+          { duration: 0.6, direction: "ping-pong" }
+        );
       }
     });
 
@@ -112,6 +120,7 @@ export function setup() {
       cursor = "grabbing";
       isOnBelt = false;
       isMovingByCursor = true;
+      (item as any).unanimate("pos");
     });
 
     item.on("mouseRelease", () => {
@@ -246,6 +255,17 @@ export function setup() {
         const label = countLabels.get(tagToRemove);
         if (label) label.text = String(assemblyItems[tagToRemove]);
         item.trigger("inAssemblyStation");
+        (item as any).animate(
+          "scale",
+          [k.vec2(1, 1), k.vec2(1.3, 0.7), k.vec2(0.85, 1.2), k.vec2(1, 1)],
+          { duration: 0.35, loops: 1 }
+        );
+        item.wait(0.35, () => {
+          (item as any).animate("scale", [k.vec2(1, 1), k.vec2(1.08, 1.08)], {
+            duration: 0.6,
+            direction: "ping-pong"
+          });
+        });
         itemInAssembly.push(item);
 
         const isComplete = Object.values(assemblyItems).every(
