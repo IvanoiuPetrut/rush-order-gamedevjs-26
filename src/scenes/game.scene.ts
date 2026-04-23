@@ -1,6 +1,14 @@
 import k from "../kaplayCtx";
 import { ITEM, ITEMS, type ItemName } from "../entities";
 import { CURSORS, GAME_OPTIONS } from "../constants";
+import type {
+  AreaComp,
+  GameObj,
+  PosComp,
+  SpriteComp,
+  TextComp,
+  TimerComp
+} from "kaplay";
 //loadSprite(\"bean\", \"sprites/bean.png\")
 
 let cursor: keyof typeof CURSORS = "default";
@@ -52,7 +60,7 @@ const assemblyStation = [
 ];
 
 for (const pos of assemblyStation) {
-  const assemblyItems: Partial<Record<ItemName, number>> = {
+  let assemblyItems: Partial<Record<ItemName, number>> = {
     [ITEM.brown]: 2,
     [ITEM.green]: 1,
     [ITEM.orange]: 3
@@ -73,19 +81,46 @@ for (const pos of assemblyStation) {
     numberOfKeys * widthOfItem + (numberOfKeys - 1) * distanceBetweenItems;
   const startX = GAME_OPTIONS.TILE_SIZE / 2 - totalWidth / 2;
 
+  const countLabels = new Map<ItemName, GameObj<TextComp>>();
+
   Object.entries(assemblyItems).forEach(([name, count], i) => {
     const xOffset = startX + i * step;
     assemblyStationEntity.add([k.sprite(name), k.pos(xOffset, -15)]);
-    assemblyStationEntity.add([
+    const label = assemblyStationEntity.add([
       k.text(String(count), { size: 6 }),
       k.pos(xOffset + 2, -5)
     ]);
+    countLabels.set(name as ItemName, label);
   });
 
-  assemblyStationEntity.on("inAssemblyStation", (item) => {
-    console.log("item in assembly station", item);
-    item.trigger("inAssemblyStation");
-  });
+  assemblyStationEntity.on(
+    "inAssemblyStation",
+    (item: GameObj<SpriteComp | PosComp | AreaComp | TimerComp>) => {
+      //check that the item is one of the required and not 0
+      console.log("item in assembly station", item);
+      const tagToRemove =
+        (Object.keys(assemblyItems) as ItemName[]).find((name) =>
+          item.is(name)
+        ) ?? null;
+
+      console.log("tag to remove", tagToRemove, assemblyItems);
+
+      if (!tagToRemove) {
+        return;
+      }
+
+      const currentCount = assemblyItems[tagToRemove] ?? 0;
+
+      if (!tagToRemove || currentCount <= 0) {
+        return;
+      }
+
+      assemblyItems[tagToRemove] = currentCount - 1;
+      const label = countLabels.get(tagToRemove);
+      if (label) label.text = String(assemblyItems[tagToRemove]);
+      item.trigger("inAssemblyStation");
+    }
+  );
 }
 
 // ! Packager
@@ -116,7 +151,7 @@ const itemSpawner = k.add([
   k.timer()
 ]);
 
-itemSpawner.loop(100, () => {
+itemSpawner.loop(1.5, () => {
   let isOnBelt = true;
   let isMovingByCursor = false;
   let isInAssemblyStation = false;
@@ -125,6 +160,7 @@ itemSpawner.loop(100, () => {
     k.sprite(ITEM.brown),
     k.pos(getMapPositionByTile(beltRow, 0)),
     "item",
+    ITEM.brown,
     k.timer(),
     k.area({ scale: 1.5, offset: k.vec2(-2, -2) })
   ]);
