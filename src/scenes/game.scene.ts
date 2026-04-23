@@ -4,6 +4,16 @@ import { CURSORS, GAME_OPTIONS } from "../constants";
 //loadSprite(\"bean\", \"sprites/bean.png\")
 
 let cursor: keyof typeof CURSORS = "default";
+const mousePosition = k.vec2(0, 0);
+
+k.onMouseMove((pos) => {
+  mousePosition.x = pos.x;
+  mousePosition.y = pos.y;
+});
+
+k.onMouseRelease(() => {
+  k.trigger("mouseRelease", "item");
+});
 
 //for item in ITEMS, load the sprite
 for (const [item, { sprite }] of Object.entries(ITEMS)) {
@@ -42,16 +52,31 @@ const assemblyStation = [
 ];
 
 for (const pos of assemblyStation) {
-  k.add([k.sprite(ITEM.assembly_station), k.pos(pos.x, pos.y)]);
+  k.add([
+    k.sprite(ITEM.assembly_station),
+    k.pos(pos.x, pos.y),
+    k.area(),
+    "assemblyStation"
+  ]);
 }
 
 // ! Packager
 const packagerPosition = getMapPositionByTile(6, 8);
-k.add([k.sprite(ITEM.packager), k.pos(packagerPosition.x, packagerPosition.y)]);
+k.add([
+  k.sprite(ITEM.packager),
+  k.pos(packagerPosition.x, packagerPosition.y),
+  k.area(),
+  "packager"
+]);
 
 // ! Car
 const carPosition = getMapPositionByTile(10, 15);
-k.add([k.sprite(ITEM.car), k.pos(carPosition.x, carPosition.y)]);
+k.add([
+  k.sprite(ITEM.car),
+  k.pos(carPosition.x, carPosition.y),
+  k.area(),
+  "car"
+]);
 
 // ! Item Spawner
 
@@ -63,7 +88,10 @@ const itemSpawner = k.add([
   k.timer()
 ]);
 
-itemSpawner.loop(2, () => {
+itemSpawner.loop(1000, () => {
+  let isOnBelt = true;
+  let isMovingByCursor = false;
+
   const item = k.add([
     k.sprite(ITEM.brown),
     k.pos(getMapPositionByTile(beltRow, 0)),
@@ -73,7 +101,16 @@ itemSpawner.loop(2, () => {
   ]);
 
   item.onUpdate(() => {
-    item.move(50, 0);
+    if (isOnBelt) {
+      item.move(50, 0);
+    }
+
+    console.log("isMovingByCursor", isMovingByCursor);
+
+    if (isMovingByCursor) {
+      console.log("moving by cursor");
+      item.pos = mousePosition;
+    }
   });
 
   item.onCollide("fire", () => {
@@ -82,6 +119,13 @@ itemSpawner.loop(2, () => {
 
   item.onClick(() => {
     cursor = "grabbing";
+    isOnBelt = false;
+    isMovingByCursor = true;
+  });
+
+  item.on("mouseRelease", () => {
+    console.log("mouse released on item");
+    isMovingByCursor = false;
   });
 
   item.onHover(() => {
