@@ -1,9 +1,9 @@
 import k from "../kaplayCtx";
 import { ITEM, ITEMS } from "../entities";
-import { GAME_OPTIONS } from "../constants";
+import { CURSORS, GAME_OPTIONS } from "../constants";
 //loadSprite(\"bean\", \"sprites/bean.png\")
 
-let cursor: "default" | "grab" | "grabbing" | "pointer" = "default";
+let cursor: keyof typeof CURSORS = "default";
 
 //for item in ITEMS, load the sprite
 for (const [item, { sprite }] of Object.entries(ITEMS)) {
@@ -94,5 +94,5 @@ itemSpawner.loop(2, () => {
 });
 
 k.onUpdate(() => {
-  k.setCursor(cursor);
+  k.setCursor(CURSORS[cursor]);
 });
