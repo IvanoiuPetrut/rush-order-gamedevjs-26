@@ -1,0 +1,1 @@
+import "./scenes/root.scene";
