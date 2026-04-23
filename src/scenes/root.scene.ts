@@ -1,11 +1,13 @@
 import k from "../kaplayCtx";
+import { setup as setupGame } from "./game.scene";
+import { setup as setupGameOver } from "./gameOver.scene";
 
 k.scene("game", () => {
-  import("./game.scene");
+  setupGame();
 });
 
 k.scene("game-over", () => {
-  // TODO
+  setupGameOver();
 });
 
 k.go("game");
