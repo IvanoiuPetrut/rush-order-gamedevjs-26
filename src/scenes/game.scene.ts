@@ -1,5 +1,5 @@
 import k from "../kaplayCtx";
-import { ITEM, ITEMS } from "../entities";
+import { ITEM, ITEMS, type ItemName } from "../entities";
 import { CURSORS, GAME_OPTIONS } from "../constants";
 //loadSprite(\"bean\", \"sprites/bean.png\")
 
@@ -52,16 +52,22 @@ const assemblyStation = [
 ];
 
 for (const pos of assemblyStation) {
-  const assemblyItems = {
-    ITEM.brown: 5,
-  }
+  const assemblyItems: Partial<Record<ItemName, number>> = {
+    [ITEM.brown]: 2,
+    [ITEM.green]: 1
+  };
 
-  k.add([
+  const assemblyStationEntity = k.add([
     k.sprite(ITEM.assembly_station),
     k.pos(pos.x, pos.y),
     k.area(),
     "assemblyStation"
   ]);
+
+  assemblyStationEntity.on("inAssemblyStation", (item) => {
+    console.log("item in assembly station", item);
+    item.trigger("inAssemblyStation");
+  });
 }
 
 // ! Packager
@@ -95,6 +101,7 @@ const itemSpawner = k.add([
 itemSpawner.loop(100, () => {
   let isOnBelt = true;
   let isMovingByCursor = false;
+  let isInAssemblyStation = false;
 
   const item = k.add([
     k.sprite(ITEM.brown),
@@ -119,36 +126,49 @@ itemSpawner.loop(100, () => {
     item.destroy();
   });
 
-  item.onCollide("assemblyStation", () => {
-    // console.log(isOnBelt, isMovingByCursor);
-    // if (!isOnBelt && !isMovingByCursor) {
-    //   item.destroy();
-    // }
-  });
-
   item.onClick(() => {
+    if (isInAssemblyStation) {
+      return;
+    }
+
     cursor = "grabbing";
     isOnBelt = false;
     isMovingByCursor = true;
   });
 
+  item.on("inAssemblyStation", () => {
+    isInAssemblyStation = true;
+  });
+
   item.on("mouseRelease", () => {
-    console.log("mouse released on item");
+    if (isInAssemblyStation) {
+      return;
+    }
+
     isMovingByCursor = false;
+
     const collisions = item.getCollisions();
     collisions.forEach((collision) => {
       if (collision.target.is("assemblyStation")) {
-        item.destroy();
+        collision.target.trigger("inAssemblyStation", item);
         cursor = "default";
       }
     });
   });
 
   item.onHover(() => {
+    if (isInAssemblyStation) {
+      return;
+    }
+
     cursor = "grab";
   });
 
   item.onHoverEnd(() => {
+    if (isInAssemblyStation) {
+      return;
+    }
+
     cursor = "default";
   });
 });
