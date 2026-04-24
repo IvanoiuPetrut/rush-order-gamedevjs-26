@@ -27,11 +27,47 @@ k.loadShader(
 `
 );
 
+k.loadShader(
+  "postFx",
+  undefined,
+  `
+  uniform float u_time;
+
+  vec4 frag(vec2 pos, vec2 uv, vec4 color, sampler2D tex) {
+    float dist = length(uv - vec2(0.5));
+
+    // Chromatic aberration — R/B channels split outward from center
+    float ca = dist * dist * 0.008;
+    float r = texture2D(tex, uv + vec2(ca, 0.0)).r;
+    float g = def_frag().g;
+    float b = texture2D(tex, uv - vec2(ca, 0.0)).b;
+    vec4 c = vec4(r, g, b, def_frag().a);
+
+    // Color grading — warm rusty-orange industrial tint
+    c.r = min(c.r * 1.08 + 0.015, 1.0);
+    c.g = c.g * 0.97;
+    c.b = c.b * 0.88;
+
+    // Vignette — darkened edges
+    float vignette = 1.0 - smoothstep(0.5, 1.6, dist * 1.4);
+    c.rgb *= vignette;
+
+    // Subtle brightness flicker
+    float flicker = 1.1 + sin(u_time * 13.7) * 0.008;
+    c.rgb *= flicker;
+
+    return c;
+  }
+`
+);
+
 for (const [item, { sprite }] of Object.entries(ITEMS)) {
   k.loadSprite(item, sprite);
 }
 
 export function setup() {
+  k.usePostEffect("postFx", () => ({ u_time: k.time() }));
+
   let cursor: keyof typeof CURSORS = "default";
   const mousePosition = k.vec2(0, 0);
   let score = 48;
@@ -104,6 +140,7 @@ export function setup() {
       if (isOnGround && !triggeredIsOnGround) {
         outlineItem.scaleTo(1.2);
         addScore(-1);
+        k.shake(0.5);
         triggeredIsOnGround = true;
         const landX = item.pos.x;
         const landY = item.pos.y;
@@ -282,6 +319,7 @@ export function setup() {
 
     assemblyStationEntity.on("assemblyStart", () => {
       console.log("assembly start!");
+      k.shake(1);
       (assemblyStationEntity as any).animate(
         "pos",
         [k.vec2(pos.x - 0.5, pos.y), k.vec2(pos.x + 0.5, pos.y)],
@@ -294,6 +332,7 @@ export function setup() {
     });
 
     assemblyStationEntity.on("assemblyComplete", () => {
+      k.shake(3);
       (assemblyStationEntity as any).unanimate("pos");
       assemblyStationEntity.pos = k.vec2(pos.x, pos.y);
       assemblyItems = {
@@ -342,6 +381,7 @@ export function setup() {
     ]);
 
     packagerEntity.on("startPackaging", (destroyCompleteItem: () => void) => {
+      k.shake(1);
       (packagerEntity as any).animate(
         "pos",
         [
@@ -389,6 +429,7 @@ export function setup() {
     ]);
 
     carEntity.on("receivePackage", (destroyPackage: () => void) => {
+      k.shake(2);
       addScore(4);
       destroyPackage();
     });
@@ -423,6 +464,7 @@ export function setup() {
     item.onCollide("fire", () => {
       destroyItem();
       addScore(-1);
+      k.shake(2);
     });
     item.on("inAssemblyStation", () => lock());
   });

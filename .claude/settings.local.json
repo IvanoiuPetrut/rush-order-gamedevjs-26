@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\petrut.ivanoiu\\\\Desktop\\\\Personal\\\\assembly-line\" -Depth 2 -Exclude \"node_modules\" | Where-Object { $_.PSIsContainer } | Select-Object Name, FullName)",
+      "PowerShell(ls *)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\petrut.ivanoiu\\\\Desktop\\\\Personal\\\\assembly-line\" | Select-Object Name, @{Name=\"IsDir\"; Expression={$_.PSIsContainer}})",
+      "PowerShell(head *)",
+      "PowerShell(Get-Content *)"
+    ]
+  }
+}
