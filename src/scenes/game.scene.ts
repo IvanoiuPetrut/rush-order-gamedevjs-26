@@ -7,7 +7,7 @@ import type {
   PosComp,
   SpriteComp,
   TextComp,
-  TimerComp
+  TimerComp,
 } from "kaplay";
 
 //GameObj<SpriteComp | PosComp | AreaComp | TimerComp>
@@ -24,7 +24,7 @@ k.loadShader(
     if (texColor.a < 0.1) discard;
     return color;
   }
-`
+`,
 );
 
 k.loadShader(
@@ -71,8 +71,11 @@ k.loadShader(
 
     return c;
   }
-`
+`,
 );
+
+k.loadSprite("bg", "sprites/bg.png");
+k.loadSprite("fg", "sprites/fg.png");
 
 for (const [item, { sprite }] of Object.entries(ITEMS)) {
   k.loadSprite(item, sprite);
@@ -117,7 +120,7 @@ export function setup() {
     tags: string[],
     targetTag: string,
     onDropped: (item: GameObjWithComponents, target: GameObj) => void,
-    onBelt = false
+    onBelt = false,
   ) {
     let isMovingByCursor = false;
     let isOnBelt = onBelt;
@@ -132,7 +135,7 @@ export function setup() {
       k.shader("silhouette"),
       k.z(50),
       k.scale(0),
-      "outlineItem"
+      "outlineItem",
     ]);
 
     const item = k.add([
@@ -143,7 +146,7 @@ export function setup() {
       k.timer(),
       k.animate(),
       k.z(100),
-      k.area({ scale: 1.5, offset: k.vec2(-2, -2) })
+      k.area({ scale: 1.5, offset: k.vec2(-2, -2) }),
     ] as any) as GameObjWithComponents;
 
     item.onUpdate(() => {
@@ -170,7 +173,7 @@ export function setup() {
         (item as any).animate(
           "pos",
           [k.vec2(landX, landY), k.vec2(landX, landY - 2)],
-          { duration: 0.6, direction: "ping-pong" }
+          { duration: 0.6, direction: "ping-pong" },
         );
       }
     });
@@ -212,6 +215,8 @@ export function setup() {
 
     return { item, lock, destroyItem };
   }
+  k.add([k.sprite("bg")]);
+  k.add([k.sprite("fg"), k.z(200)]);
 
   // ! Score bar
   const scoreBarOuter = k.add([
@@ -219,20 +224,20 @@ export function setup() {
     k.pos(8, 4),
     k.color(40, 40, 40),
     k.fixed(),
-    k.z(200)
+    k.z(200),
   ]);
 
   const scoreBarFill = scoreBarOuter.add([
     k.rect(score, 6),
     k.pos(2, 2),
-    k.color(80, 200, 80)
+    k.color(80, 200, 80),
   ]);
 
   // ! Belt
   const beltLength = 14;
   const beltRow = 14;
   const beltPositions = Array.from({ length: beltLength }, (_, col) =>
-    getMapPositionByTile(beltRow, col)
+    getMapPositionByTile(beltRow, col),
   );
   for (const pos of beltPositions) {
     k.add([k.sprite(ITEM.belt), k.pos(pos.x, pos.y)]);
@@ -244,7 +249,7 @@ export function setup() {
     k.sprite(ITEM.fire),
     k.pos(firePosition.x, firePosition.y),
     k.area(),
-    "fire"
+    "fire",
   ]);
 
   // ! Assembly station
@@ -253,14 +258,14 @@ export function setup() {
     getMapPositionByTile(ASSEMBLY_STATION_ROW, 7),
     getMapPositionByTile(ASSEMBLY_STATION_ROW, 10),
     getMapPositionByTile(ASSEMBLY_STATION_ROW, 13),
-    getMapPositionByTile(ASSEMBLY_STATION_ROW, 16)
+    getMapPositionByTile(ASSEMBLY_STATION_ROW, 16),
   ];
 
   for (const pos of assemblyStation) {
     let assemblyItems: Partial<Record<ItemName, number>> = {
       [ITEM.brown]: Math.floor(k.rand(maxValueForItemsNeededToAssemble)) + 1,
       [ITEM.green]: Math.floor(k.rand(maxValueForItemsNeededToAssemble)) + 1,
-      [ITEM.orange]: Math.floor(k.rand(maxValueForItemsNeededToAssemble)) + 1
+      [ITEM.orange]: Math.floor(k.rand(maxValueForItemsNeededToAssemble)) + 1,
     };
 
     const itemInAssembly = [] as GameObjWithComponents[];
@@ -272,7 +277,7 @@ export function setup() {
       k.area(),
       k.timer(),
       k.animate(),
-      "assemblyStation"
+      "assemblyStation",
     ]);
 
     const widthOfItem = 8;
@@ -290,7 +295,7 @@ export function setup() {
       assemblyStationEntity.add([k.sprite(name), k.pos(xOffset, -15)]);
       const label = assemblyStationEntity.add([
         k.text(String(count), { size: 6 }),
-        k.pos(xOffset + 2, -5)
+        k.pos(xOffset + 2, -5),
       ]);
       countLabels.set(name as ItemName, label);
     });
@@ -301,7 +306,7 @@ export function setup() {
         console.log("item in assembly station", item);
         const tagToRemove =
           (Object.keys(assemblyItems) as ItemName[]).find((name) =>
-            item.is(name)
+            item.is(name),
           ) ?? null;
 
         if (!tagToRemove) {
@@ -321,23 +326,23 @@ export function setup() {
         (item as any).animate(
           "scale",
           [k.vec2(1, 1), k.vec2(1.3, 0.7), k.vec2(0.85, 1.2), k.vec2(1, 1)],
-          { duration: 0.35, loops: 1 }
+          { duration: 0.35, loops: 1 },
         );
         item.wait(0.35, () => {
           (item as any).animate("scale", [k.vec2(1, 1), k.vec2(1.08, 1.08)], {
             duration: 0.6,
-            direction: "ping-pong"
+            direction: "ping-pong",
           });
         });
         itemInAssembly.push(item);
 
         const isComplete = Object.values(assemblyItems).every(
-          (count) => count === 0
+          (count) => count === 0,
         );
         if (isComplete) {
           assemblyStationEntity.trigger("assemblyStart");
         }
-      }
+      },
     );
 
     assemblyStationEntity.on("assemblyStart", () => {
@@ -346,7 +351,7 @@ export function setup() {
       (assemblyStationEntity as any).animate(
         "pos",
         [k.vec2(pos.x - 0.5, pos.y), k.vec2(pos.x + 0.5, pos.y)],
-        { duration: 0.08, direction: "ping-pong" }
+        { duration: 0.08, direction: "ping-pong" },
       );
       assemblyStationEntity.wait(assemblyTime, () => {
         console.log("assembly complete!");
@@ -362,7 +367,7 @@ export function setup() {
       assemblyItems = {
         [ITEM.brown]: 1,
         [ITEM.green]: 1,
-        [ITEM.orange]: 1
+        [ITEM.orange]: 1,
       };
       Object.entries(assemblyItems).forEach(([name, count]) => {
         const label = countLabels.get(name as ItemName);
@@ -380,7 +385,7 @@ export function setup() {
         (_item, target) => {
           lock();
           target.trigger("startPackaging", destroyItem);
-        }
+        },
       );
     });
   }
@@ -391,7 +396,7 @@ export function setup() {
     getMapPositionByTile(PACKAGER_ROW, 2),
     getMapPositionByTile(PACKAGER_ROW, 5),
     getMapPositionByTile(PACKAGER_ROW, 8),
-    getMapPositionByTile(PACKAGER_ROW, 11)
+    getMapPositionByTile(PACKAGER_ROW, 11),
   ];
 
   for (const packagerPosition of packagerPositions) {
@@ -401,7 +406,7 @@ export function setup() {
       k.area(),
       k.timer(),
       k.animate(),
-      "packager"
+      "packager",
     ]);
 
     packagerEntity.on("startPackaging", (destroyCompleteItem: () => void) => {
@@ -410,9 +415,9 @@ export function setup() {
         "pos",
         [
           k.vec2(packagerPosition.x - 0.5, packagerPosition.y),
-          k.vec2(packagerPosition.x + 0.5, packagerPosition.y)
+          k.vec2(packagerPosition.x + 0.5, packagerPosition.y),
         ],
-        { duration: 0.08, direction: "ping-pong" }
+        { duration: 0.08, direction: "ping-pong" },
       );
       packagerEntity.wait(2, () => {
         (packagerEntity as any).unanimate("pos");
@@ -428,7 +433,7 @@ export function setup() {
           (_item, target) => {
             lock();
             target.trigger("receivePackage", destroyItem);
-          }
+          },
         );
       });
     });
@@ -441,15 +446,19 @@ export function setup() {
     getMapPositionByTile(6, CAR_COLUMN),
     getMapPositionByTile(8, CAR_COLUMN),
     getMapPositionByTile(10, CAR_COLUMN),
-    getMapPositionByTile(12, CAR_COLUMN)
+    getMapPositionByTile(12, CAR_COLUMN),
   ];
+
+  const offScreenX = GAME_OPTIONS.MAP_WIDTH * GAME_OPTIONS.TILE_SIZE + 32;
 
   for (const carPosition of carsPositions) {
     const carEntity = k.add([
       k.sprite(ITEM.car),
       k.pos(carPosition.x, carPosition.y),
       k.area(),
-      "car"
+      k.timer(),
+      k.animate(),
+      "car",
     ]);
 
     carEntity.on("receivePackage", (destroyPackage: () => void) => {
@@ -457,6 +466,33 @@ export function setup() {
       flash = -0.3;
       addScore(4);
       destroyPackage();
+
+      const exitDuration = 0.7;
+      const returnDuration = 0.5;
+      (carEntity as any).animate(
+        "pos",
+        [
+          k.vec2(carPosition.x, carPosition.y),
+          k.vec2(offScreenX, carPosition.y),
+        ],
+        { duration: exitDuration, loops: 1 },
+      );
+      carEntity.wait(exitDuration + 0.5, () => {
+        (carEntity as any).unanimate("pos");
+        carEntity.pos = k.vec2(offScreenX, carPosition.y);
+        (carEntity as any).animate(
+          "pos",
+          [
+            k.vec2(offScreenX, carPosition.y),
+            k.vec2(carPosition.x, carPosition.y),
+          ],
+          { duration: returnDuration, loops: 1 },
+        );
+        carEntity.wait(returnDuration, () => {
+          (carEntity as any).unanimate("pos");
+          carEntity.pos = k.vec2(carPosition.x, carPosition.y);
+        });
+      });
     });
   }
 
@@ -466,7 +502,7 @@ export function setup() {
     k.rect(GAME_OPTIONS.TILE_SIZE, GAME_OPTIONS.TILE_SIZE),
     k.color(k.Color.RED),
     "itemSpawner",
-    k.timer()
+    k.timer(),
   ]);
 
   const itemsToSpawn: ItemName[] = [ITEM.brown, ITEM.green, ITEM.orange];
@@ -483,7 +519,7 @@ export function setup() {
       ["item", randomItem],
       "assemblyStation",
       (_item, target) => target.trigger("inAssemblyStation", _item),
-      true
+      true,
     );
 
     item.onCollide("fire", () => {
@@ -509,8 +545,9 @@ export function setup() {
     k.setCursor(CURSORS[cursor]);
     playTime += k.dt();
     caBoost = Math.max(0, caBoost - k.dt() * 2);
-    flash = flash > 0
-      ? Math.max(0, flash - k.dt() * 3)
-      : Math.min(0, flash + k.dt() * 3);
+    flash =
+      flash > 0
+        ? Math.max(0, flash - k.dt() * 3)
+        : Math.min(0, flash + k.dt() * 3);
   });
 }
