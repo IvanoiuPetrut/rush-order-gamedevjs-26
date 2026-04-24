@@ -40,7 +40,7 @@ k.loadShader(
     float dist = length(uv - vec2(0.5));
 
     // Chromatic aberration: base + event spike + ambient from low score
-    float ca = dist * dist * (0.008 + u_ca_boost + (1.0 - u_score) * 0.018);
+    float ca = dist * dist * (0.004 + u_ca_boost + (1.0 - u_score) * 0.020);
     float r = texture2D(tex, uv + vec2(ca, 0.0)).r;
     float g = def_frag().g;
     float b = texture2D(tex, uv - vec2(ca, 0.0)).b;
