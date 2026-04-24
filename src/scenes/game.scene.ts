@@ -32,12 +32,15 @@ k.loadShader(
   undefined,
   `
   uniform float u_time;
+  uniform float u_ca_boost;   // extra CA on bad events, decays to 0
+  uniform float u_flash;      // >0 = bad (orange-red), <0 = good (bright), decays to 0
+  uniform float u_score;      // 0.0 (dead) to 1.0 (full), drives ambient glitchiness
 
   vec4 frag(vec2 pos, vec2 uv, vec4 color, sampler2D tex) {
     float dist = length(uv - vec2(0.5));
 
-    // Chromatic aberration — R/B channels split outward from center
-    float ca = dist * dist * 0.008;
+    // Chromatic aberration: base + event spike + ambient from low score
+    float ca = dist * dist * (0.008 + u_ca_boost + (1.0 - u_score) * 0.018);
     float r = texture2D(tex, uv + vec2(ca, 0.0)).r;
     float g = def_frag().g;
     float b = texture2D(tex, uv - vec2(ca, 0.0)).b;
@@ -48,8 +51,18 @@ k.loadShader(
     c.g = c.g * 0.97;
     c.b = c.b * 0.88;
 
-    // Vignette — darkened edges
-    float vignette = 1.0 - smoothstep(0.5, 1.6, dist * 1.4);
+    // Flash: positive = bad event (red tint), negative = good event (brightness)
+    if (u_flash > 0.0) {
+      c.r = min(c.r + u_flash * 0.35, 1.0);
+      c.g *= 1.0 - u_flash * 0.2;
+      c.b *= 1.0 - u_flash * 0.3;
+    } else {
+      c.rgb = min(c.rgb - u_flash * 0.35, vec3(1.0));
+    }
+
+    // Vignette: gets heavier as score drops
+    float vigStr = 0.5 + (1.0 - u_score) * 0.5;
+    float vignette = 1.0 - smoothstep(0.5, 1.6, dist * 1.4) * vigStr;
     c.rgb *= vignette;
 
     // Subtle brightness flicker
@@ -66,7 +79,15 @@ for (const [item, { sprite }] of Object.entries(ITEMS)) {
 }
 
 export function setup() {
-  k.usePostEffect("postFx", () => ({ u_time: k.time() }));
+  let caBoost = 0;
+  let flash = 0;
+
+  k.usePostEffect("postFx", () => ({
+    u_time: k.time(),
+    u_ca_boost: caBoost,
+    u_flash: flash,
+    u_score: score / SCORE_MAX_VALUE,
+  }));
 
   let cursor: keyof typeof CURSORS = "default";
   const mousePosition = k.vec2(0, 0);
@@ -141,6 +162,8 @@ export function setup() {
         outlineItem.scaleTo(1.2);
         addScore(-1);
         k.shake(0.5);
+        caBoost = Math.min(caBoost + 0.02, 0.06);
+        flash = 0.3;
         triggeredIsOnGround = true;
         const landX = item.pos.x;
         const landY = item.pos.y;
@@ -333,6 +356,7 @@ export function setup() {
 
     assemblyStationEntity.on("assemblyComplete", () => {
       k.shake(3);
+      flash = -0.4;
       (assemblyStationEntity as any).unanimate("pos");
       assemblyStationEntity.pos = k.vec2(pos.x, pos.y);
       assemblyItems = {
@@ -430,6 +454,7 @@ export function setup() {
 
     carEntity.on("receivePackage", (destroyPackage: () => void) => {
       k.shake(2);
+      flash = -0.3;
       addScore(4);
       destroyPackage();
     });
@@ -465,6 +490,8 @@ export function setup() {
       destroyItem();
       addScore(-1);
       k.shake(2);
+      caBoost = Math.min(caBoost + 0.06, 0.12);
+      flash = 0.7;
     });
     item.on("inAssemblyStation", () => lock());
   });
@@ -481,5 +508,9 @@ export function setup() {
   k.onUpdate(() => {
     k.setCursor(CURSORS[cursor]);
     playTime += k.dt();
+    caBoost = Math.max(0, caBoost - k.dt() * 2);
+    flash = flash > 0
+      ? Math.max(0, flash - k.dt() * 3)
+      : Math.min(0, flash + k.dt() * 3);
   });
 }
