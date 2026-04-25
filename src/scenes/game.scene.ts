@@ -253,7 +253,7 @@ export function setup() {
   ]);
 
   // ! Timer display
-  const timerBg = k.add([
+  k.add([
     k.rect(42, 10),
     k.pos(k.width() - 8, 4),
     k.anchor("topright"),
@@ -261,11 +261,13 @@ export function setup() {
     k.fixed(),
     k.z(200),
   ]);
-  const timerText = timerBg.add([
+  const timerText = k.add([
     k.text("00:00", { size: 7 }),
-    k.pos(21, 5),
+    k.pos(k.width() - 29, 9),
     k.anchor("center"),
     k.color(255, 255, 255),
+    k.fixed(),
+    k.z(201),
   ]);
 
   // ! Belt
