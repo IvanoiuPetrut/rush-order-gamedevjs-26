@@ -4,6 +4,7 @@ import { CURSORS, GAME_OPTIONS } from "../constants";
 import { sound } from "../sound";
 import type {
   AreaComp,
+  ColorComp,
   GameObj,
   PosComp,
   SpriteComp,
@@ -79,7 +80,7 @@ k.loadShader(
 `,
 );
 
-k.loadSprite("bg", "sprites/bg.png");
+k.loadSprite("bg", "sprites/bg_alternate.png");
 k.loadSprite("fg", "sprites/fg.png");
 
 for (const [item, { sprite }] of Object.entries(ITEMS)) {
@@ -237,6 +238,15 @@ export function setup() {
   k.add([k.sprite("bg")]);
   k.add([k.sprite("fg"), k.z(200)]);
 
+  // ! Ground decorations
+  for (let i = 0; i < 40; i++) {
+    const row = Math.floor(k.rand(GAME_OPTIONS.MAP_HEIGHT - 3)) + 1;
+    const col = Math.floor(k.rand(GAME_OPTIONS.MAP_WIDTH - 3));
+    if (row === 14 || col >= 19) continue;
+    const tile = k.rand(1) > 0.5 ? ITEM.grass : ITEM.flowers;
+    k.add([k.sprite(tile), k.pos(getMapPositionByTile(row, col)), k.z(0)]);
+  }
+
   // ! Score bar
   const scoreBarOuter = k.add([
     k.rect(60, 10),
@@ -324,17 +334,32 @@ export function setup() {
       numberOfKeys * widthOfItem + (numberOfKeys - 1) * distanceBetweenItems;
     const startX = GAME_OPTIONS.TILE_SIZE / 2 - totalWidth / 2;
 
-    const countLabels = new Map<ItemName, GameObj<TextComp>>();
+    const countLabels = new Map<ItemName, GameObj<TextComp | ColorComp>>();
+    const itemSprites = new Map<ItemName, GameObj<SpriteComp | ColorComp>>();
 
     Object.entries(assemblyItems).forEach(([name, count], i) => {
       const xOffset = startX + i * step;
-      assemblyStationEntity.add([k.sprite(name), k.pos(xOffset, -20)]);
+      const sprite = assemblyStationEntity.add([
+        k.sprite(name),
+        k.pos(xOffset, -20),
+        k.color(255, 255, 255),
+      ]);
+      itemSprites.set(name as ItemName, sprite);
       const label = assemblyStationEntity.add([
         k.text(String(count), { size: 8 }),
         k.pos(xOffset + 4, -8),
+        k.color(255, 255, 255),
       ]);
       countLabels.set(name as ItemName, label);
     });
+
+    function setItemVisual(name: ItemName, done: boolean) {
+      const col = done ? k.rgb(110, 110, 110) : k.rgb(255, 255, 255);
+      const sprite = itemSprites.get(name);
+      const label = countLabels.get(name);
+      if (sprite) sprite.color = col;
+      if (label) label.color = col;
+    }
 
     assemblyStationEntity.on(
       "inAssemblyStation",
@@ -359,6 +384,7 @@ export function setup() {
         assemblyItems[tagToRemove] = currentCount - 1;
         const label = countLabels.get(tagToRemove);
         if (label) label.text = String(assemblyItems[tagToRemove]);
+        setItemVisual(tagToRemove as ItemName, assemblyItems[tagToRemove] === 0);
         item.trigger("inAssemblyStation");
         (item as any).animate(
           "scale",
@@ -410,6 +436,7 @@ export function setup() {
       Object.entries(assemblyItems).forEach(([name, count]) => {
         const label = countLabels.get(name as ItemName);
         if (label) label.text = String(count);
+        setItemVisual(name as ItemName, false);
       });
       itemInAssembly.forEach((item) => item.destroy());
       itemInAssembly.length = 0;

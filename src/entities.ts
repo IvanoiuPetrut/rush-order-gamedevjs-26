@@ -9,7 +9,9 @@ export const ITEM = {
   green: "GREEN",
   orange: "ORANGE",
   complete_item: "COMPLETE_ITEM",
-  package_item: "PACKAGE_ITEM"
+  package_item: "PACKAGE_ITEM",
+  grass: "GRASS",
+  flowers: "FLOWERS",
 } as const;
 
 export type ItemName = (typeof ITEM)[keyof typeof ITEM];
@@ -51,5 +53,11 @@ export const ITEMS: Record<ItemName, Item> = {
   },
   PACKAGE_ITEM: {
     sprite: "sprites/items/package_item.png"
+  },
+  GRASS: {
+    sprite: "sprites/grass.png"
+  },
+  FLOWERS: {
+    sprite: "sprites/flowers.png"
   }
 };
