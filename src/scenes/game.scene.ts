@@ -318,6 +318,74 @@ export function setup() {
     "fire",
   ]);
 
+  // ! Fire particles
+  const FIRE_COLORS = [
+    k.rgb(80, 200, 180),
+    k.rgb(60, 160, 220),
+    k.rgb(100, 220, 160),
+    k.rgb(40, 180, 200),
+  ];
+
+  interface FireParticle {
+    x: number; y: number;
+    vx: number; vy: number;
+    age: number; maxAge: number;
+    r: number;
+    color: ReturnType<typeof k.rgb>;
+  }
+
+  const fireParticles: FireParticle[] = [];
+  const fireCx = firePosition.x + 8;
+  const fireCy = firePosition.y - 3 + 8;
+
+  function spawnFireParticle() {
+    fireParticles.push({
+      x: fireCx + (k.rand(1) - 0.5) * 10,
+      y: fireCy + (k.rand(1) - 0.5) * 4,
+      vx: (k.rand(1) - 0.5) * 8,
+      vy: -(10 + k.rand(1) * 18),
+      age: 0,
+      maxAge: 0.5 + k.rand(1) * 0.5,
+      r: 1.5 + k.rand(1) * 2,
+      color: FIRE_COLORS[Math.floor(k.rand(FIRE_COLORS.length))],
+    });
+  }
+
+  let fireSpawnAccum = 0;
+  k.add([
+    k.pos(0, 0),
+    k.z(150),
+    {
+      update() {
+        const dt = k.dt();
+        fireSpawnAccum += dt;
+        while (fireSpawnAccum >= 0.04) {
+          spawnFireParticle();
+          fireSpawnAccum -= 0.04;
+        }
+        for (let i = fireParticles.length - 1; i >= 0; i--) {
+          const p = fireParticles[i];
+          p.age += dt;
+          if (p.age >= p.maxAge) { fireParticles.splice(i, 1); continue; }
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.vy += 4 * dt;
+        }
+      },
+      draw() {
+        for (const p of fireParticles) {
+          const t = p.age / p.maxAge;
+          k.drawCircle({
+            pos: k.vec2(p.x, p.y),
+            radius: p.r * (1 - t * 0.5),
+            color: p.color,
+            opacity: (1 - t) * 0.85,
+          });
+        }
+      },
+    },
+  ]);
+
   // ! Assembly station
   const ASSEMBLY_STATION_ROW = 2;
   const assemblyStation = [
