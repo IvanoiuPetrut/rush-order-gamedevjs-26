@@ -1,4 +1,5 @@
 import k from "../kaplayCtx";
+import { sound } from "../sound";
 
 export function setup() {
   k.loadSprite("firstMenu", "sprites/menu/first_menu.png");
@@ -57,6 +58,7 @@ export function setup() {
     const btn = makeButton("Continue", k.width() / 2, k.height() - 16);
 
     btn.onClick(() => {
+      sound.uiClick();
       btn.destroy();
       fadeOut(() => {
         bg.destroy();
@@ -118,6 +120,7 @@ export function setup() {
       inkPoints.push({ x: mp.x, y: mp.y });
       if (!hasSigned) {
         hasSigned = true;
+        sound.signDraw();
         startBtn.color = k.rgb(80, 200, 80);
       }
     }
@@ -127,6 +130,7 @@ export function setup() {
 
     startBtn.onClick(() => {
       if (!hasSigned) return;
+      sound.uiClick();
       fadeOut(() => k.go("game"));
     });
 

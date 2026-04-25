@@ -1,6 +1,7 @@
 import k from "../kaplayCtx";
 import { ITEM, ITEMS, type ItemName } from "../entities";
 import { CURSORS, GAME_OPTIONS } from "../constants";
+import { sound } from "../sound";
 import type {
   AreaComp,
   GameObj,
@@ -109,6 +110,7 @@ export function setup() {
     score = Math.max(0, Math.min(score + points, SCORE_MAX_VALUE));
     scoreBarFill.width = score;
     if (score === 0) {
+      sound.gameOver();
       k.setData("playTime", playTime);
       k.setData("packagesDelivered", packagesDelivered);
       k.setData("itemsBurned", itemsBurned);
@@ -169,6 +171,7 @@ export function setup() {
       const isOnGround = !isOnBelt && !isMovingByCursor && !isLocked;
       if (isOnGround && !triggeredIsOnGround) {
         outlineItem.scaleTo(1.2);
+        sound.itemGround();
         addScore(-1);
         k.shake(0.5);
         caBoost = Math.min(caBoost + 0.02, 0.06);
@@ -186,6 +189,7 @@ export function setup() {
 
     item.onClick(() => {
       if (isLocked) return;
+      sound.itemGrab();
       cursor = "grabbing";
       isOnBelt = false;
       isMovingByCursor = true;
@@ -341,6 +345,7 @@ export function setup() {
           return;
         }
 
+        sound.itemStation();
         assemblyItems[tagToRemove] = currentCount - 1;
         const label = countLabels.get(tagToRemove);
         if (label) label.text = String(assemblyItems[tagToRemove]);
@@ -382,6 +387,7 @@ export function setup() {
     });
 
     assemblyStationEntity.on("assemblyComplete", () => {
+      sound.assemblyComplete();
       k.shake(3);
       flash = -0.4;
       (assemblyStationEntity as any).unanimate("pos");
@@ -442,6 +448,7 @@ export function setup() {
         { duration: 0.08, direction: "ping-pong" },
       );
       packagerEntity.wait(2, () => {
+        sound.packagingComplete();
         (packagerEntity as any).unanimate("pos");
         packagerEntity.pos = k.vec2(packagerPosition.x, packagerPosition.y);
         destroyCompleteItem();
@@ -484,6 +491,7 @@ export function setup() {
     ]);
 
     carEntity.on("receivePackage", (destroyPackage: () => void) => {
+      sound.delivery();
       k.shake(2);
       flash = -0.3;
       packagesDelivered++;
@@ -538,6 +546,7 @@ export function setup() {
     );
 
     item.onCollide("fire", () => {
+      sound.itemBurned();
       itemsBurned++;
       destroyItem();
       addScore(-1);
