@@ -257,6 +257,7 @@ export function setup() {
     ]);
   }
 
+  k.add([k.sprite("fg"), k.z(200)]);
 
   // ! Ground decorations
   for (let i = 0; i < 40; i++) {
