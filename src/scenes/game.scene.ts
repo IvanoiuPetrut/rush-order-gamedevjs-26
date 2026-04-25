@@ -302,7 +302,7 @@ export function setup() {
       "assemblyStation",
     ]);
 
-    const widthOfItem = 8;
+    const widthOfItem = 12;
     const distanceBetweenItems = 2;
     const step = widthOfItem + distanceBetweenItems;
     const numberOfKeys = Object.keys(assemblyItems).length;
@@ -314,10 +314,10 @@ export function setup() {
 
     Object.entries(assemblyItems).forEach(([name, count], i) => {
       const xOffset = startX + i * step;
-      assemblyStationEntity.add([k.sprite(name), k.pos(xOffset, -15)]);
+      assemblyStationEntity.add([k.sprite(name), k.pos(xOffset, -20)]);
       const label = assemblyStationEntity.add([
-        k.text(String(count), { size: 6 }),
-        k.pos(xOffset + 2, -5),
+        k.text(String(count), { size: 8 }),
+        k.pos(xOffset + 4, -8),
       ]);
       countLabels.set(name as ItemName, label);
     });
