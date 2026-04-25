@@ -1,15 +1,16 @@
 import k from "./kaplayCtx";
 
-k.loadSound("uiClick", "sounds/ui_click.mp3");
-k.loadSound("itemGrab", "sounds/item_grab.mp3");
-k.loadSound("itemStation", "sounds/item_station.mp3");
-k.loadSound("assemblyComplete", "sounds/assembly_complete.mp3");
-k.loadSound("packagingComplete", "sounds/packaging_complete.mp3");
+k.loadSound("uiClick", "sounds/ui_click.ogg");
+k.loadSound("itemGrab", "sounds/item_grab.ogg");
+k.loadSound("itemStation", "sounds/item_station.ogg");
+k.loadSound("assemblyComplete", "sounds/assembly_complete.ogg");
+k.loadSound("packagingComplete", "sounds/packaging_complete.ogg");
 k.loadSound("delivery", "sounds/delivery.mp3");
-k.loadSound("itemBurned", "sounds/item_burned.mp3");
-k.loadSound("itemGround", "sounds/item_ground.mp3");
+k.loadSound("itemBurned", "sounds/item_burned.ogg");
+k.loadSound("itemGround", "sounds/item_ground.ogg");
 k.loadSound("gameOver", "sounds/game_over.mp3");
-k.loadSound("signDraw", "sounds/sign_draw.mp3");
+k.loadSound("signDraw", "sounds/sign_draw.ogg");
+k.loadSound("bgm", "sounds/bgm.mp3");
 
 class SoundManager {
   private static instance: SoundManager;
@@ -41,6 +42,9 @@ class SoundManager {
   itemGround() { this.play("itemGround", 0.5); }
   gameOver() { this.play("gameOver", 0.9); }
   signDraw() { this.play("signDraw", 0.4); }
+  bgm() {
+    try { k.play("bgm", { loop: true, volume: 0.3 }); } catch (_) { }
+  }
 }
 
 export const sound = SoundManager.getInstance();

@@ -61,10 +61,14 @@ k.loadShader(
       c.rgb = min(c.rgb - u_flash * 0.35, vec3(1.0));
     }
 
-    // Vignette: gets heavier as score drops
-    float vigStr = 0.5 + (1.0 - u_score) * 0.5;
+    // Vignette: subtle, gets heavier as score drops
+    float vigStr = 0.25 + (1.0 - u_score) * 0.35;
     float vignette = 1.0 - smoothstep(0.5, 1.6, dist * 1.4) * vigStr;
     c.rgb *= vignette;
+
+    // Desaturation at low score
+    float gray = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+    c.rgb = mix(vec3(gray), c.rgb, 0.4 + u_score * 0.6);
 
     // Subtle brightness flicker
     float flicker = 1.1 + sin(u_time * 13.7) * 0.008;
@@ -102,13 +106,18 @@ export function setup() {
   const SCORE_MAX_VALUE = 56;
   const RAMP_DURATION = 120;
   let maxValueForItemsNeededToAssemble = 1;
+  let assemblyTime = 3;
   let beltSpeed = 15;
   let itemSpawnInterval = 2.0;
   let timeSinceLastSpawn = 0;
 
+  sound.bgm();
+
   function addScore(points: number) {
     score = Math.max(0, Math.min(score + points, SCORE_MAX_VALUE));
     scoreBarFill.width = score;
+    const ratio = score / SCORE_MAX_VALUE;
+    scoreBarFill.color = ratio > 0.6 ? k.rgb(80, 200, 80) : ratio > 0.25 ? k.rgb(220, 180, 40) : k.rgb(220, 60, 60);
     if (score === 0) {
       sound.gameOver();
       k.setData("playTime", playTime);
@@ -295,7 +304,6 @@ export function setup() {
     };
 
     const itemInAssembly = [] as GameObjWithComponents[];
-    let assemblyTime = 3;
 
     const assemblyStationEntity = k.add([
       k.sprite(ITEM.assembly_station),
@@ -498,6 +506,29 @@ export function setup() {
       addScore(4);
       destroyPackage();
 
+      const particleColors = [k.rgb(255, 220, 50), k.rgb(100, 220, 100), k.rgb(255, 160, 50), k.rgb(255, 255, 255)];
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const speed = 25 + k.rand(25);
+        const vx = Math.cos(angle) * speed;
+        const vy = Math.sin(angle) * speed;
+        const p = k.add([
+          k.rect(2, 2),
+          k.pos(carPosition.x + 8, carPosition.y + 4),
+          k.color(particleColors[Math.floor(k.rand(particleColors.length))]),
+          k.opacity(1),
+          k.z(150),
+        ]);
+        let age = 0;
+        p.onUpdate(() => {
+          age += k.dt();
+          p.pos.x += vx * k.dt();
+          p.pos.y += vy * k.dt();
+          p.opacity = 1 - age * 2.5;
+          if (age >= 0.4) p.destroy();
+        });
+      }
+
       const exitDuration = 0.7;
       const returnDuration = 0.5;
       (carEntity as any).animate(
@@ -578,6 +609,7 @@ export function setup() {
     const t = Math.min(playTime / RAMP_DURATION, 1);
     beltSpeed = 15 + t * 40;
     itemSpawnInterval = 2.0 - t * 1.3;
+    assemblyTime = 3 - t * 1.5;
     maxValueForItemsNeededToAssemble = t < 0.4 ? 1 : t < 0.75 ? 2 : 3;
 
     timeSinceLastSpawn += k.dt();
