@@ -189,6 +189,9 @@ export function setup() {
         triggeredIsOnGround = true;
         const landX = item.pos.x;
         const landY = item.pos.y;
+        emitBurst(landX + 4, landY + 8, 10,
+          [k.rgb(160, 130, 90), k.rgb(200, 170, 120), k.rgb(120, 100, 70)],
+          30, 0.4, 2, 60);
         (item as any).animate(
           "pos",
           [k.vec2(landX, landY), k.vec2(landX, landY - 2)],
@@ -386,6 +389,72 @@ export function setup() {
     },
   ]);
 
+  // ! Burst particles (fire burn, assembly complete, item ground)
+  interface BurstParticle {
+    x: number; y: number;
+    vx: number; vy: number;
+    age: number; maxAge: number;
+    r: number;
+    color: ReturnType<typeof k.rgb>;
+  }
+
+  const burstParticles: BurstParticle[] = [];
+
+  function emitBurst(
+    cx: number, cy: number,
+    count: number,
+    colors: ReturnType<typeof k.rgb>[],
+    speed: number,
+    maxAge: number,
+    radius: number,
+    gravity = 40,
+  ) {
+    for (let i = 0; i < count; i++) {
+      const angle = k.rand(Math.PI * 2);
+      const spd = speed * (0.4 + k.rand(1) * 0.6);
+      burstParticles.push({
+        x: cx + (k.rand(1) - 0.5) * 6,
+        y: cy + (k.rand(1) - 0.5) * 6,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd - speed * 0.3,
+        age: 0,
+        maxAge: maxAge * (0.6 + k.rand(1) * 0.4),
+        r: radius * (0.5 + k.rand(1) * 0.5),
+        color: colors[Math.floor(k.rand(colors.length))],
+        _gravity: gravity,
+      } as BurstParticle & { _gravity: number });
+    }
+  }
+
+  k.add([
+    k.pos(0, 0),
+    k.z(150),
+    {
+      update() {
+        const dt = k.dt();
+        for (let i = burstParticles.length - 1; i >= 0; i--) {
+          const p = burstParticles[i] as BurstParticle & { _gravity: number };
+          p.age += dt;
+          if (p.age >= p.maxAge) { burstParticles.splice(i, 1); continue; }
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.vy += p._gravity * dt;
+        }
+      },
+      draw() {
+        for (const p of burstParticles) {
+          const t = p.age / p.maxAge;
+          k.drawCircle({
+            pos: k.vec2(p.x, p.y),
+            radius: p.r * (1 - t * 0.6),
+            color: p.color,
+            opacity: (1 - t) * 0.9,
+          });
+        }
+      },
+    },
+  ]);
+
   // ! Assembly station
   const ASSEMBLY_STATION_ROW = 2;
   const assemblyStation = [
@@ -514,6 +583,9 @@ export function setup() {
       sound.assemblyComplete();
       k.shake(3);
       flash = -0.4;
+      emitBurst(pos.x + 8, pos.y, 18,
+        [k.rgb(255, 220, 60), k.rgb(255, 160, 40), k.rgb(255, 255, 180)],
+        55, 0.6, 2.5, 80);
       (assemblyStationEntity as any).unanimate("pos");
       assemblyStationEntity.pos = k.vec2(pos.x, pos.y);
       assemblyItems = {
@@ -697,6 +769,9 @@ export function setup() {
 
     item.onCollide("fire", () => {
       sound.itemBurned();
+      emitBurst(item.pos.x + 4, item.pos.y + 4, 20,
+        [k.rgb(80, 200, 180), k.rgb(60, 160, 220), k.rgb(200, 80, 40), k.rgb(255, 140, 20)],
+        50, 0.7, 2.5, 30);
       itemsBurned++;
       destroyItem();
       addScore(-1);

@@ -15,4 +15,4 @@ k.scene("game-over", () => {
   setupGameOver();
 });
 
-k.go("game");
+k.go("menu");
