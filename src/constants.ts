@@ -9,5 +9,5 @@ export const GAME_OPTIONS = {
   TILE_SIZE: 16,
   MAP_WIDTH: 22,
   MAP_HEIGHT: 17,
-  SCALE: 3,
+  SCALE: 2,
 } as const;
