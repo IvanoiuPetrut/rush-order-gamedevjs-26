@@ -294,7 +294,7 @@ export function setup() {
     k.z(200),
   ]);
   const timerText = k.add([
-    k.text("00:00", { size: 7 }),
+    k.text("00:00", { size: 7, font: "chalk" }),
     k.pos(k.width() - 29, 9),
     k.anchor("center"),
     k.color(255, 255, 255),
@@ -503,7 +503,7 @@ export function setup() {
       ]);
       itemSprites.set(name as ItemName, sprite);
       const label = assemblyStationEntity.add([
-        k.text(String(count), { size: 8 }),
+        k.text(String(count), { size: 8, font: "chalk" }),
         k.pos(xOffset + 4, -8),
         k.color(255, 255, 255),
       ]);

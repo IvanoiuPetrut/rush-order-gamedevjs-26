@@ -14,5 +14,6 @@ const k = kaplay({
 });
 
 k.loadRoot("./"); // A good idea for Itch.io publishing later
+k.loadFont("chalk", "font/Chalkduster.ttf");
 
 export default k;

@@ -35,7 +35,7 @@ export function setup() {
       k.fixed(),
       k.z(10),
     ]);
-    btn.add([k.text(label, { size: 8 }), k.anchor("center"), k.pos(0, 0)]);
+    btn.add([k.text(label, { size: 8, font: "chalk" }), k.anchor("center"), k.pos(0, 0)]);
     btn.onHover(() => { btn.color = k.rgb(60, 180, 60); });
     btn.onHoverEnd(() => { btn.color = k.rgb(80, 200, 80); });
     return btn;
@@ -96,7 +96,7 @@ export function setup() {
       k.fixed(),
       k.z(10),
     ]);
-    startBtn.add([k.text("Start Working!", { size: 8 }), k.anchor("center"), k.pos(0, 0)]);
+    startBtn.add([k.text("Start Working!", { size: 8, font: "chalk" }), k.anchor("center"), k.pos(0, 0)]);
 
     startBtn.onHover(() => {
       if (hasSigned) startBtn.color = k.rgb(60, 180, 60);

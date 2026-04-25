@@ -24,7 +24,7 @@ export function setup() {
   const WHITE = k.rgb(255, 255, 255);
 
   k.add([
-    k.text(performanceTitle(), { size: 16 }),
+    k.text(performanceTitle(), { size: 16, font: "chalk" }),
     k.pos(LEFT_X, 200),
     k.color(k.Color.WHITE),
     k.fixed(),
@@ -45,7 +45,7 @@ export function setup() {
 
   stats.forEach((line, i) => {
     k.add([
-      k.text(line, { size: 12 }),
+      k.text(line, { size: 12, font: "chalk" }),
       k.pos(LEFT_X, statStartY + i * statSpacing),
       k.color(WHITE),
       k.fixed(),
@@ -64,7 +64,7 @@ export function setup() {
   ]);
 
   tryAgainBtn.add([
-    k.text("Apply Again", { size: 8 }),
+    k.text("Apply Again", { size: 8, font: "chalk" }),
     k.anchor("center"),
     k.pos(0, 0),
   ]);
