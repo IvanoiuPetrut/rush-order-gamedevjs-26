@@ -235,6 +235,25 @@ export function setup() {
 
     return { item, lock, destroyItem };
   }
+
+  function addShadow(cx: number, cy: number, rx: number, ry: number) {
+    k.add([
+      k.pos(cx, cy),
+      k.z(0),
+      {
+        draw() {
+          k.drawEllipse({
+            pos: k.vec2(0, 0),
+            radiusX: rx,
+            radiusY: ry,
+            color: k.rgb(0, 0, 0),
+            opacity: 0.28,
+          });
+        },
+      },
+    ]);
+  }
+
   k.add([k.sprite("bg")]);
   k.add([k.sprite("fg"), k.z(200)]);
 
@@ -309,6 +328,7 @@ export function setup() {
   ];
 
   for (const pos of assemblyStation) {
+    addShadow(pos.x + 12, pos.y + 25, 15, 4);
     let assemblyItems: Partial<Record<ItemName, number>> = {
       [ITEM.brown]: Math.floor(k.rand(maxValueForItemsNeededToAssemble)) + 1,
       [ITEM.green]: Math.floor(k.rand(maxValueForItemsNeededToAssemble)) + 1,
@@ -465,6 +485,7 @@ export function setup() {
   ];
 
   for (const packagerPosition of packagerPositions) {
+    addShadow(packagerPosition.x + 12, packagerPosition.y + 25, 15, 4);
     const packagerEntity = k.add([
       k.sprite(ITEM.packager),
       k.pos(packagerPosition.x, packagerPosition.y),
@@ -518,6 +539,7 @@ export function setup() {
   const offScreenX = GAME_OPTIONS.MAP_WIDTH * GAME_OPTIONS.TILE_SIZE + 32;
 
   for (const carPosition of carsPositions) {
+    addShadow(carPosition.x + 22, carPosition.y + 22, 25, 4);
     const carEntity = k.add([
       k.sprite(ITEM.car),
       k.pos(carPosition.x, carPosition.y),
