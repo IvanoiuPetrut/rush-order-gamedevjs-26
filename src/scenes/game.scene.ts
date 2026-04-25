@@ -98,10 +98,12 @@ export function setup() {
   let playTime = 0;
   let packagesDelivered = 0;
   let itemsBurned = 0;
-  const SCORE_MAX_VALUE = 5;
-  let maxValueForItemsNeededToAssemble = 2;
-  let beltSpeed = 20;
-  let itemSpawnInterval = 1.5;
+  const SCORE_MAX_VALUE = 56;
+  const RAMP_DURATION = 120;
+  let maxValueForItemsNeededToAssemble = 1;
+  let beltSpeed = 15;
+  let itemSpawnInterval = 2.0;
+  let timeSinceLastSpawn = 0;
 
   function addScore(points: number) {
     score = Math.max(0, Math.min(score + points, SCORE_MAX_VALUE));
@@ -235,6 +237,22 @@ export function setup() {
     k.rect(score, 6),
     k.pos(2, 2),
     k.color(80, 200, 80),
+  ]);
+
+  // ! Timer display
+  const timerBg = k.add([
+    k.rect(42, 10),
+    k.pos(k.width() - 8, 4),
+    k.anchor("topright"),
+    k.color(40, 40, 40),
+    k.fixed(),
+    k.z(200),
+  ]);
+  const timerText = timerBg.add([
+    k.text("00:00", { size: 7 }),
+    k.pos(21, 5),
+    k.anchor("center"),
+    k.color(255, 255, 255),
   ]);
 
   // ! Belt
@@ -502,17 +520,9 @@ export function setup() {
   }
 
   // ! Item Spawner
-  const itemSpawner = k.add([
-    k.pos(getMapPositionByTile(beltRow, -1)),
-    k.rect(GAME_OPTIONS.TILE_SIZE, GAME_OPTIONS.TILE_SIZE),
-    k.color(k.Color.RED),
-    "itemSpawner",
-    k.timer(),
-  ]);
-
   const itemsToSpawn: ItemName[] = [ITEM.brown, ITEM.green, ITEM.orange];
 
-  itemSpawner.loop(itemSpawnInterval, () => {
+  function spawnItem() {
     const randomItem = itemsToSpawn[Math.floor(k.rand(itemsToSpawn.length))];
     const startPos = getMapPositionByTile(beltRow, 0);
     startPos.x = startPos.x - k.rand(16);
@@ -536,7 +546,7 @@ export function setup() {
       flash = 0.7;
     });
     item.on("inAssemblyStation", () => lock());
-  });
+  }
 
   k.onMouseMove((pos) => {
     mousePosition.x = pos.x;
@@ -555,5 +565,20 @@ export function setup() {
       flash > 0
         ? Math.max(0, flash - k.dt() * 3)
         : Math.min(0, flash + k.dt() * 3);
+
+    const t = Math.min(playTime / RAMP_DURATION, 1);
+    beltSpeed = 15 + t * 40;
+    itemSpawnInterval = 2.0 - t * 1.3;
+    maxValueForItemsNeededToAssemble = t < 0.4 ? 1 : t < 0.75 ? 2 : 3;
+
+    timeSinceLastSpawn += k.dt();
+    if (timeSinceLastSpawn >= itemSpawnInterval) {
+      timeSinceLastSpawn = 0;
+      spawnItem();
+    }
+
+    const mins = Math.floor(playTime / 60);
+    const secs = Math.floor(playTime % 60);
+    timerText.text = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   });
 }
