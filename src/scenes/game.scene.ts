@@ -13,7 +13,7 @@ import type {
 //GameObj<SpriteComp | PosComp | AreaComp | TimerComp>
 interface GameObjWithComponents extends GameObj<
   SpriteComp | PosComp | AreaComp | TimerComp
-> {}
+> { }
 
 k.loadShader(
   "silhouette",
@@ -96,7 +96,9 @@ export function setup() {
   const mousePosition = k.vec2(0, 0);
   let score = 48;
   let playTime = 0;
-  const SCORE_MAX_VALUE = 56;
+  let packagesDelivered = 0;
+  let itemsBurned = 0;
+  const SCORE_MAX_VALUE = 5;
   let maxValueForItemsNeededToAssemble = 2;
   let beltSpeed = 20;
   let itemSpawnInterval = 1.5;
@@ -106,7 +108,9 @@ export function setup() {
     scoreBarFill.width = score;
     if (score === 0) {
       k.setData("playTime", playTime);
-      // k.go("game-over");
+      k.setData("packagesDelivered", packagesDelivered);
+      k.setData("itemsBurned", itemsBurned);
+      k.go("game-over");
     }
   }
 
@@ -464,6 +468,7 @@ export function setup() {
     carEntity.on("receivePackage", (destroyPackage: () => void) => {
       k.shake(2);
       flash = -0.3;
+      packagesDelivered++;
       addScore(4);
       destroyPackage();
 
@@ -523,6 +528,7 @@ export function setup() {
     );
 
     item.onCollide("fire", () => {
+      itemsBurned++;
       destroyItem();
       addScore(-1);
       k.shake(2);

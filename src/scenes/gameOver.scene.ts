@@ -1,46 +1,76 @@
 import k from "../kaplayCtx";
 
+k.loadSprite("gameOver", "sprites/menu/game_over.png");
+
 export function setup() {
   const playTime: number = k.getData("playTime") ?? 0;
+  const packagesDelivered: number = k.getData("packagesDelivered") ?? 0;
+  const itemsBurned: number = k.getData("itemsBurned") ?? 0;
+
   const minutes = Math.floor(playTime / 60);
   const seconds = Math.floor(playTime % 60);
   const formatted = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
-  const cx = k.width() / 2;
-  const cy = k.height() / 2;
+  function performanceTitle() {
+    if (packagesDelivered === 0) return "Spectacular failure.";
+    if (packagesDelivered < 3) return "At least you tried.";
+    if (packagesDelivered < 8) return "Mediocre at best.";
+    return "Almost competent.";
+  }
+
+  k.add([k.sprite("gameOver"), k.pos(0, 0), k.fixed(), k.z(0)]);
+
+  const LEFT_X = 80;
+  const WHITE = k.rgb(255, 255, 255);
 
   k.add([
-    k.text("GAME OVER", { size: 24 }),
-    k.pos(cx, cy - 50),
-    k.anchor("center"),
-    k.fixed()
+    k.text(performanceTitle(), { size: 16 }),
+    k.pos(LEFT_X, 200),
+    k.color(k.Color.WHITE),
+    k.fixed(),
+    k.z(1),
   ]);
 
-  k.add([
-    k.text(`You lasted: ${formatted}`, { size: 10 }),
-    k.pos(cx, cy - 20),
-    k.anchor("center"),
-    k.fixed()
-  ]);
+  const stats = [
+    `Employment time: ${formatted}`,
+    `Packages shipped: ${packagesDelivered}`,
+    `Items incinerated: ${itemsBurned}`,
+    `Employee of the month: 0 times`,
+    `Would rehire: Absolutely not`,
+    `Boss satisfaction: -inf%`,
+  ];
+
+  const statStartY = 80;
+  const statSpacing = 16;
+
+  stats.forEach((line, i) => {
+    k.add([
+      k.text(line, { size: 12 }),
+      k.pos(LEFT_X, statStartY + i * statSpacing),
+      k.color(WHITE),
+      k.fixed(),
+      k.z(1),
+    ]);
+  });
 
   const tryAgainBtn = k.add([
-    k.rect(70, 18),
-    k.pos(cx, cy + 16),
+    k.rect(80, 18),
+    k.pos(k.width() / 2, 242),
     k.anchor("center"),
     k.color(80, 200, 80),
     k.area(),
     k.fixed(),
-    k.z(10)
+    k.z(2),
   ]);
 
   tryAgainBtn.add([
-    k.text("Try Again", { size: 8 }),
+    k.text("Apply Again", { size: 8 }),
     k.anchor("center"),
-    k.pos(0, 0)
+    k.pos(0, 0),
   ]);
 
   tryAgainBtn.onClick(() => {
-    k.go("game");
+    k.go("menu");
   });
 
   tryAgainBtn.onHover(() => {
