@@ -5,7 +5,7 @@ const k = kaplay({
   width: GAME_OPTIONS.MAP_WIDTH * GAME_OPTIONS.TILE_SIZE,
   height: GAME_OPTIONS.MAP_HEIGHT * GAME_OPTIONS.TILE_SIZE,
   global: false,
-  background: "#4F7942",
+  background: "#89c76d",
   touchToMouse: true,
   canvas: document.getElementById("game-canvas") as HTMLCanvasElement,
   debug: true, // set it to false when deploying the game
