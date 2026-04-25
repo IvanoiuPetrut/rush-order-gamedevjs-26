@@ -294,8 +294,8 @@ export function setup() {
   const firePosition = getMapPositionByTile(beltRow, beltLength);
   k.add([
     k.sprite(ITEM.fire),
-    k.pos(firePosition.x, firePosition.y),
-    k.area(),
+    k.pos(firePosition.x, firePosition.y - 3),
+    k.area({ scale: 0.4, offset: k.vec2(8) }),
     "fire",
   ]);
 
